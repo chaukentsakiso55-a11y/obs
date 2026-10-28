@@ -1,0 +1,28 @@
+name: OBSIDIAN Linux ISO
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ['scripts/**', 'config/**', 'obsidian/**', 'tools/**', '.github/workflows/build-iso.yml']
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+      - name: Prepare live-build
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y live-build debootstrap xorriso squashfs-tools
+      - name: Stage OBSIDIAN files
+        run: bash scripts/stage.sh
+      - name: Build ISO
+        run: sudo bash scripts/build-iso.sh
+      - name: Upload boot image
+        uses: actions/upload-artifact@v4
+        with:
+          name: obsidian-os-amd64-iso
+          path: |
+            out/obsidian-os-amd64.iso
+            out/SHA256SUMS
+          retention-days: 7
