@@ -1,0 +1,17 @@
+#!/bin/sh
+set -eu
+mkdir -p /opt/obsidian /usr/local/bin /etc/xdg/autostart
+cp -a /opt/obsidian-source/. /opt/obsidian/
+rm -rf /opt/obsidian-source
+printf '#!/bin/sh\nexec python3 /opt/obsidian/obsidian/shell.py\n' > /usr/local/bin/obsidian-shell
+chmod +x /usr/local/bin/obsidian-shell
+printf '#!/bin/sh\nexec python3 /opt/obsidian/tools/obs.py "$@"\n' > /usr/local/bin/obs
+chmod +x /usr/local/bin/obs
+cat > /etc/xdg/autostart/obsidian-shell.desktop <<'EOF'
+[Desktop Entry]
+Type=Application
+Name=OBSIDIAN Shell
+Exec=/usr/local/bin/obsidian-shell
+Terminal=false
+X-GNOME-Autostart-enabled=true
+EOF
