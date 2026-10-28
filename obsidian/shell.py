@@ -2,7 +2,7 @@ import os
 import sys
 import subprocess
 from pathlib import Path
-from PySide6.QtCore import Qt, QDateTime
+from PySide6.QtCore import Qt, QDateTime, QThread, Signal
 from PySide6.QtGui import QColor, QFont
 from PySide6.QtWidgets import (
  QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QLabel,
@@ -10,6 +10,8 @@ from PySide6.QtWidgets import (
  QTabWidget, QMessageBox, QSplitter, QListWidget, QFrame
 )
 from eden import answer
+from eden_runtime import EdenRuntime
+from security_events import check_path
 
 STYLE = """
 QWidget {background:#030917;color:#dcefff;font-family:'DejaVu Sans';font-size:12px}
@@ -29,6 +31,15 @@ APPS = [
  ("OBS Package Manager","Packages"), ("Financial Integrity","Finance"),
  ("Identity Guardian","Identity"), ("Settings","Settings")
 ]
+
+class EdenWorker(QThread):
+    completed=Signal(str,str)
+    def __init__(self,prompt):
+        super().__init__()
+        self.prompt=prompt
+    def run(self):
+        result=EdenRuntime().chat(self.prompt)
+        self.completed.emit(result.text,result.provider)
 
 class Desktop(QMainWindow):
     def __init__(self):
@@ -51,6 +62,7 @@ class Desktop(QMainWindow):
         self.tabs=QTabWidget(); self.tabs.setTabsClosable(True)
         self.tabs.tabCloseRequested.connect(self.tabs.removeTab)
         splitter.addWidget(self.tabs);splitter.setStretchFactor(1,1)
+        self.workers=[]
         self.open_app("EDEN")
     def page(self,title):
         panel=QWidget();layout=QVBoxLayout(panel)
@@ -71,12 +83,22 @@ class Desktop(QMainWindow):
             b.clicked.connect(lambda:subprocess.Popen(["xfce4-terminal"]))
             l.addWidget(b)
         elif key=="EDEN":
-            history=QTextEdit();history.setReadOnly(True);history.setText("EDEN AI — Local-first interface\nNo inference model connected yet.")
+            history=QTextEdit();history.setReadOnly(True)
+            history.setText("EDEN AI — Local-first assistant\\nConnect an Ollama model for actual local inference.\\nThe model cannot execute OS actions.")
             l.addWidget(history)
             entry=QLineEdit();entry.setPlaceholderText("Ask EDEN...");l.addWidget(entry)
             def send():
                 q=entry.text().strip()
-                if q: history.append("YOU: "+q+"\nEDEN: "+answer(q));entry.clear()
+                if not q:return
+                history.append("YOU: "+q+"\\nEDEN: Thinking locally...")
+                entry.clear();entry.setEnabled(False)
+                worker=EdenWorker(q);self.workers.append(worker)
+                def done(reply,provider):
+                    history.append("EDEN ("+provider+"): "+reply)
+                    entry.setEnabled(True)
+                worker.completed.connect(done)
+                worker.finished.connect(lambda:self.workers.remove(worker) if worker in self.workers else None)
+                worker.start()
             entry.returnPressed.connect(send)
         elif key=="Developer":
             l.addWidget(QLabel("Native OBS SDK · Python / GCC / Node.js / Rust"))
