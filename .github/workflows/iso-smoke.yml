@@ -4,17 +4,20 @@ on:
 jobs:
   smoke:
     runs-on: ubuntu-24.04
+    container:
+      image: debian:bookworm
+      options: --privileged
     timeout-minutes: 90
     steps:
       - uses: actions/checkout@v4
-      - name: Install tools
+      - name: Install Debian build and VM tools
         run: |
-          sudo apt-get update
-          sudo apt-get install -y live-build debootstrap xorriso squashfs-tools qemu-system-x86
+          apt-get update
+          DEBIAN_FRONTEND=noninteractive apt-get install -y live-build debootstrap debian-archive-keyring xorriso squashfs-tools grub-pc-bin grub-efi-amd64-bin mtools dosfstools qemu-system-x86 ca-certificates
       - name: Stage sources
         run: bash scripts/stage.sh
       - name: Build ISO
-        run: sudo bash scripts/build-iso.sh
+        run: bash scripts/build-iso.sh
       - name: Attempt QEMU boot
         run: bash scripts/smoke-test-iso.sh
       - name: Upload diagnostic logs
