@@ -9,9 +9,7 @@ from PySide6.QtWidgets import (
  QPushButton, QTextEdit, QLineEdit, QFileSystemModel, QTreeView,
  QTabWidget, QMessageBox, QSplitter, QListWidget, QFrame
 )
-from eden import answer
 from eden_runtime import EdenRuntime
-from security_events import check_path
 
 STYLE = """
 QWidget {background:#030917;color:#dcefff;font-family:'DejaVu Sans';font-size:12px}
@@ -84,13 +82,13 @@ class Desktop(QMainWindow):
             l.addWidget(b)
         elif key=="EDEN":
             history=QTextEdit();history.setReadOnly(True)
-            history.setText("EDEN AI — Local-first assistant\\nConnect an Ollama model for actual local inference.\\nThe model cannot execute OS actions.")
+            history.setText("EDEN AI — Local-first assistant\nConnect an Ollama model for actual local inference.\nThe model cannot execute OS actions.")
             l.addWidget(history)
             entry=QLineEdit();entry.setPlaceholderText("Ask EDEN...");l.addWidget(entry)
             def send():
                 q=entry.text().strip()
                 if not q:return
-                history.append("YOU: "+q+"\\nEDEN: Thinking locally...")
+                history.append("YOU: "+q+"\nEDEN: Thinking locally...")
                 entry.clear();entry.setEnabled(False)
                 worker=EdenWorker(q);self.workers.append(worker)
                 def done(reply,provider):
