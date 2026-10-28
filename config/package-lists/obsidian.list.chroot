@@ -7,6 +7,8 @@ lightdm
 lightdm-gtk-greeter
 xfce4
 xfce4-terminal
+xfce4-taskmanager
+xfce4-settings
 thunar
 network-manager
 network-manager-gnome
