@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Experimental OBSIDIAN package SDK. No untrusted code execution."""
+"""OBS app builder. We pack files, not run random code."""
 import argparse
 import json
 import pathlib
@@ -44,6 +44,7 @@ def build(folder):
                 z.write(p,p.relative_to(root).as_posix())
     print("Created",output,"for",data["id"])
 
+# Heads up: inspection reads metadata only. No mystery code gets launched.
 def inspect(path):
     with zipfile.ZipFile(path) as z:
         names=z.namelist()
